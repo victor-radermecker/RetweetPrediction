@@ -3,9 +3,9 @@ import pandas as pd
 from sklearn.dummy import DummyRegressor
 
 # Load the training data
-train_data = pd.read_csv("train.csv")
+train_data = pd.read_csv("data/train.csv")
 # Load the evaluation data
-eval_data = pd.read_csv("evaluation.csv")
+eval_data = pd.read_csv("data/evaluation.csv")
 
 # Initialize the Dummy Regressor to use the Mean value of our data
 dummy_regr = DummyRegressor(strategy="mean")
@@ -15,7 +15,7 @@ dummy_regr.fit(train_data, train_data['retweet_count'])
 dummy_pred = dummy_regr.predict(eval_data)
 
 # Dump the results into a file that follows the required Kaggle template
-with open("mean_predictions.txt", 'w') as f:
+with open("data/mean_predictions.txt", 'w') as f:
     writer = csv.writer(f)
     writer.writerow(["TweetID", "NoRetweets"])
     for index, prediction in enumerate(dummy_pred):
@@ -29,7 +29,7 @@ dummy_regr.fit(train_data, train_data['retweet_count'])
 dummy_pred = dummy_regr.predict(eval_data)
 
 # Dump the results into a file that follows the required Kaggle template
-with open("constant_predictions.txt", 'w') as f:
+with open("data/constant_predictions.txt", 'w') as f:
     writer = csv.writer(f)
     writer.writerow(["TweetID", "NoRetweets"])
     for index, prediction in enumerate(dummy_pred):
