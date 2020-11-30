@@ -7,7 +7,7 @@ Created on Fri Nov 20 13:46:55 2020
 import pandas as pd
 import re
 import numpy as np
-
+from datetime import datetime
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 from nltk.stem.wordnet import WordNetLemmatizer
@@ -21,12 +21,12 @@ def delete_duplicates(string):
     return " ".join(sorted(set(words), key=words.index))
 
 #Remove hashtags from text
-def find_deplace_hashtags(df):
+def find_deplace_hashtags(train_data):
     '''
     This function moves the "#" from the text directly to the 'hashtags' columns.
     '''
     #Find extra hashtags
-    extra_hashtags = df.apply(lambda x: re.findall("[#]\w+", x.text), axis=1)
+    extra_hashtags = train_data.apply(lambda x: re.findall("[#]\w+", x.text), axis=1)
     
     clean_hashtags = []
     for ls in extra_hashtags:
@@ -35,49 +35,49 @@ def find_deplace_hashtags(df):
         clean_hashtags.append(res)
     
     #print(clean_hashtags)
-    df.text = df.apply(lambda x: clean_hashtag(x.text), axis=1)
+    train_data.text = train_data.apply(lambda x: clean_hashtag(x.text), axis=1)
     
     #add them to hashtags columns
-    df['hashtags'] = df['hashtags'] + ', ' + pd.Series(clean_hashtags)
-    df.hashtags = df.apply(lambda x : delete_duplicates(str(x.hashtags)), axis=1)
-    df['hashtags'] = df['hashtags'].str.replace('nan, ', '')
+    train_data['hashtags'] = train_data['hashtags'] + ', ' + pd.Series(clean_hashtags)
+    train_data.hashtags = train_data.apply(lambda x : delete_duplicates(str(x.hashtags)), axis=1)
+    train_data['hashtags'] = train_data['hashtags'].str.replace('nan, ', '')
     
 def clean_urls(row):
     return " ".join(filter(lambda x:x[0:5]!='https', row.split()))
 
-def find_deplace_urls(df):
+def find_deplace_urls(train_data):
     '''
     This function moves the "#" from the text directly to the 'hashtags' columns.
     '''
     #Find extra hashtags
-    extra_urls = df.apply(lambda x: re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', x.text), axis=1)
-#df.apply(lambda x: re.findall(r"https.*", x.text), axis=1)
+    extra_urls = train_data.apply(lambda x: re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', x.text), axis=1)
+#train_data.apply(lambda x: re.findall(r"https.*", x.text), axis=1)
     
     clean_urls_res = []
     for ls in extra_urls:
         res = ', '.join(ls)
         clean_urls_res.append(res)
    
-    df.text = df.apply(lambda x: clean_urls(x.text), axis=1)
+    train_data.text = train_data.apply(lambda x: clean_urls(x.text), axis=1)
         
     #add them to urls columns  
-    df.urls = df.apply(lambda x : delete_duplicates(str(x.urls)), axis=1)
-    df["urls"] = df["urls"].str.cat(clean_urls_res, sep=', ')
-    df.urls = df.urls.replace('nan, ',np.NaN)
-    df['urls'] = df['urls'].str.replace('nan, ', '')
-    df['urls'].loc[df['urls'] == ''] = np.NaN
+    train_data.urls = train_data.apply(lambda x : delete_duplicates(str(x.urls)), axis=1)
+    train_data["urls"] = train_data["urls"].str.cat(clean_urls_res, sep=', ')
+    train_data.urls = train_data.urls.replace('nan, ',np.NaN)
+    train_data['urls'] = train_data['urls'].str.replace('nan, ', '')
+    train_data['urls'].loc[train_data['urls'] == ''] = np.NaN
 
     
 def clean_at(row):
     return " ".join(filter(lambda x:x[0]!='@', row.split()))
 
 #Remove hashtags from text
-def find_deplace_ats(df):
+def find_deplace_ats(train_data):
     '''
     This function moves the "@" from the text directly to the 'hashtags' columns.
     '''
     #Find extra hashtags
-    extra_hashtags = df.apply(lambda x: re.findall("[@]\w+", x.text), axis=1)
+    extra_hashtags = train_data.apply(lambda x: re.findall("[@]\w+", x.text), axis=1)
     
     clean_ats = []
     for ls in extra_hashtags:
@@ -85,20 +85,20 @@ def find_deplace_ats(df):
         res = res.replace('@','')
         clean_ats.append(res)
     
-    df.text = df.apply(lambda x: clean_at(x.text), axis=1)
+    train_data.text = train_data.apply(lambda x: clean_at(x.text), axis=1)
     
     #add them to hashtags columns
-    df['user_mentions'] = df['user_mentions'] + ', ' + pd.Series(clean_ats)
-    df.user_mentions = df.apply(lambda x : delete_duplicates(str(x.user_mentions)), axis=1)
-    df['user_mentions'] = df['user_mentions'].str.replace('nan, ', '')
+    train_data['user_mentions'] = train_data['user_mentions'] + ', ' + pd.Series(clean_ats)
+    train_data.user_mentions = train_data.apply(lambda x : delete_duplicates(str(x.user_mentions)), axis=1)
+    train_data['user_mentions'] = train_data['user_mentions'].str.replace('nan, ', '')
 
+def number_elements(x):
+    if x != '-':
+        return len(x.split(' '))
+    else:
+        return 0
 
 train_data = pd.read_csv("../../data/evaluation.csv")
-
-
-
-del train_data['timestamp']
-del train_data['id']
 
 print('start')
 find_deplace_urls(train_data)
@@ -145,9 +145,31 @@ print('lemmatization')
 
 #Normalization
 train_data['user_verified'] = train_data['user_verified'] * 1
-train_data['user_statuses_count'] = train_data['user_statuses_count'] / train_data['user_statuses_count'].max()
-train_data['user_followers_count'] = train_data['user_followers_count'] /train_data['user_followers_count'].max()
-train_data['user_friends_count'] = train_data['user_friends_count'] / train_data['user_friends_count'].max()
+#train_data['user_statuses_count'] = train_data['user_statuses_count'] / train_data['user_statuses_count'].max()
+#train_data['user_followers_count'] = train_data['user_followers_count'] /train_data['user_followers_count'].max()
+#train_data['user_friends_count'] = train_data['user_friends_count'] / train_data['user_friends_count'].max()
+
+#Counting number of hashtags, urls and user_mentions
+       
+#Removing NaN values 
+train_data['user_mentions'] = train_data['user_mentions'].fillna(value='-')
+train_data['urls'] = train_data['urls'].fillna(value='-')
+train_data['hashtags'] = train_data['hashtags'].fillna(value='-')
+
+train_data['nbr_user_mentions'] = pd.DataFrame(train_data['user_mentions'].apply(lambda x: number_elements(x)))
+train_data['nbr_hashtags'] = pd.DataFrame(train_data['hashtags'].apply(lambda x: number_elements(x)))
+train_data['nbr_urls'] = pd.DataFrame(train_data['urls'].apply(lambda x: number_elements(x)))
+
+#Get date
+train_data['timestamp'] = train_data['timestamp'].apply(lambda x: datetime.utcfromtimestamp(int(str(x))/1000).strftime("%Y-%m-%d %H:%M:%S"))
+train_data['timestamp'] = pd.to_datetime(train_data['timestamp'])
+
+# Add hour and day of week (1 = Monday)
+train_data['hour'] = train_data.timestamp.dt.hour
+train_data['date'] = train_data.timestamp.dt.dayofweek
 
 #Export
-train_data.to_csv(r'../../data/evaluation_cleanV2.csv', index=False)
+print('Ready for export')
+train_data.to_csv(r'../../data/eval_clean_final.csv', index=False)
+
+
