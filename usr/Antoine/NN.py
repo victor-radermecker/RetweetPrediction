@@ -32,7 +32,8 @@ def plot_loss(history):
   
 
 '''Import and split dataset'''
-dataset = pd.read_csv('export_dataframe.csv')
+
+dataset = pd.read_csv('train_processed.csv')
 train_features, test_features, train_labels, test_labels = scsplit(dataset, dataset['retweet_count'],stratify=dataset['retweet_count'], train_size=0.7, test_size=0.3)
 del train_features['retweet_count'], test_features['retweet_count']
 
