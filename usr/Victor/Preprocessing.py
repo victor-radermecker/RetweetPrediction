@@ -40,7 +40,9 @@ def find_deplace_hashtags(train_data):
     #add them to hashtags columns
     train_data['hashtags'] = train_data['hashtags'] + ', ' + pd.Series(clean_hashtags)
     train_data.hashtags = train_data.apply(lambda x : delete_duplicates(str(x.hashtags)), axis=1)
-    train_data['hashtags'] = train_data['hashtags'].str.replace('nan, ', '')
+    train_data['hashtags'] = train_data['hashtags'].str.replace('nan', '')
+    train_data['hashtags'].loc[train_data['hashtags'] == ''] = np.NaN
+
     
 def clean_urls(row):
     return " ".join(filter(lambda x:x[0:5]!='https', row.split()))
@@ -51,7 +53,7 @@ def find_deplace_urls(train_data):
     '''
     #Find extra hashtags
     extra_urls = train_data.apply(lambda x: re.findall('http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', x.text), axis=1)
-#train_data.apply(lambda x: re.findall(r"https.*", x.text), axis=1)
+    #train_data.apply(lambda x: re.findall(r"https.*", x.text), axis=1)
     
     clean_urls_res = []
     for ls in extra_urls:
@@ -61,9 +63,9 @@ def find_deplace_urls(train_data):
     train_data.text = train_data.apply(lambda x: clean_urls(x.text), axis=1)
         
     #add them to urls columns  
-    train_data.urls = train_data.apply(lambda x : delete_duplicates(str(x.urls)), axis=1)
-    train_data["urls"] = train_data["urls"].str.cat(clean_urls_res, sep=', ')
-    train_data.urls = train_data.urls.replace('nan, ',np.NaN)
+    train_data['urls'] = train_data.apply(lambda x : delete_duplicates(str(x.urls)), axis=1)
+    train_data['urls'] = train_data['urls'].str.cat(clean_urls_res, sep=', ')
+    train_data['urls'] = train_data.urls.replace('nan, ',np.NaN)
     train_data['urls'] = train_data['urls'].str.replace('nan, ', '')
     train_data['urls'].loc[train_data['urls'] == ''] = np.NaN
 
@@ -90,7 +92,8 @@ def find_deplace_ats(train_data):
     #add them to hashtags columns
     train_data['user_mentions'] = train_data['user_mentions'] + ', ' + pd.Series(clean_ats)
     train_data.user_mentions = train_data.apply(lambda x : delete_duplicates(str(x.user_mentions)), axis=1)
-    train_data['user_mentions'] = train_data['user_mentions'].str.replace('nan, ', '')
+    train_data['user_mentions'] = train_data['user_mentions'].str.replace('nan', '')
+    train_data['user_mentions'].loc[train_data['user_mentions'] == ''] = np.NaN
 
 def number_elements(x):
     if x != '-':
@@ -101,17 +104,43 @@ def number_elements(x):
 train_data = pd.read_csv("../../data/evaluation.csv")
 
 print('start')
-find_deplace_urls(train_data)
+
+#Add length of tweets
+print('Adding length')
+train_data['text_len'] = train_data.text.apply(lambda x: len(str(x)))
+
+#Get date
+print('Add date')
+time = train_data['timestamp'].apply(lambda x: datetime.utcfromtimestamp(int(str(x))/1000).strftime("%Y-%m-%d %H:%M:%S"))
+time = pd.DataFrame(time)
+time.timestamp = pd.to_datetime(time.timestamp)
+train_data['hour'] = time.timestamp.dt.hour 
+
+#Urls cleaning
 print('urls')
-find_deplace_ats(train_data)
+find_deplace_urls(train_data)
 print('@')
+find_deplace_ats(train_data)
 
 #lowercase
 train_data['text'] = train_data['text'].apply(lambda x :' '.join([word.lower() for word in x.split()]))
 print('lowercase')
 
+#Hashtags cleaning
 find_deplace_hashtags(train_data)
 print('hashtags')
+
+
+#Removing NaN values 
+print('Removing NaN values')
+train_data['user_mentions'] = train_data['user_mentions'].fillna(value='-')
+train_data['urls'] = train_data['urls'].fillna(value='-')
+train_data['hashtags'] = train_data['hashtags'].fillna(value='-')
+
+train_data['nbr_user_mentions'] = train_data['user_mentions'].apply(lambda x: number_elements(x))
+train_data['nbr_hashtags'] = train_data['hashtags'].apply(lambda x: number_elements(x))
+train_data['nbr_urls'] = train_data['urls'].apply(lambda x: number_elements(x))
+
 
 #Eliminate non-ascii chars
 train_data['text'] = train_data['text'].str.replace(r'[^\x00-\x7F]+','', regex=True)
@@ -151,24 +180,9 @@ train_data['user_verified'] = train_data['user_verified'] * 1
 
 #Counting number of hashtags, urls and user_mentions
        
-#Removing NaN values 
-train_data['user_mentions'] = train_data['user_mentions'].fillna(value='-')
-train_data['urls'] = train_data['urls'].fillna(value='-')
-train_data['hashtags'] = train_data['hashtags'].fillna(value='-')
-
-train_data['nbr_user_mentions'] = pd.DataFrame(train_data['user_mentions'].apply(lambda x: number_elements(x)))
-train_data['nbr_hashtags'] = pd.DataFrame(train_data['hashtags'].apply(lambda x: number_elements(x)))
-train_data['nbr_urls'] = pd.DataFrame(train_data['urls'].apply(lambda x: number_elements(x)))
-
-#Get date
-train_data['timestamp'] = train_data['timestamp'].apply(lambda x: datetime.utcfromtimestamp(int(str(x))/1000).strftime("%Y-%m-%d %H:%M:%S"))
-train_data['timestamp'] = pd.to_datetime(train_data['timestamp'])
-
-# Add hour and day of week (1 = Monday)
-train_data['hour'] = train_data.timestamp.dt.hour
-train_data['date'] = train_data.timestamp.dt.dayofweek
-
 #Export
+train_data.reset_index()
+
 print('Ready for export')
 train_data.to_csv(r'../../data/eval_clean_final.csv', index=False)
 
