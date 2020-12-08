@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[6]:
-
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -24,8 +21,6 @@ from sklearn.metrics import mean_absolute_error
 
 # ## Loading and preparing dataset
 
-# In[7]:
-
 
 def prepareData(data, train=True):
     # data cleaning
@@ -43,7 +38,11 @@ def prepareData(data, train=True):
 
 
 # In[8]:
+df = pd.read_csv('../../data/train_clean_final.csv')
+df_eval = pd.read_csv('../../data/eval_clean_final.csv')
 
+X_train, X_test, y_train, y_test = prepareData(df, True)
+X_test_eval = prepareData(df_eval, False)
 
 scaler = MinMaxScaler()
 X_train_norm = scaler.fit_transform(X_train)
@@ -53,9 +52,6 @@ X_eval_norm = scaler.transform(X_test_eval)
 results = []
 
 # ## Testing different regressors without tunning
-
-# In[9]:
-
 
 # Global metric for all ours algorithms
 def metrics(Xtrain, Xtest, ytrain, ytest, model, model_name):
@@ -67,7 +63,7 @@ def metrics(Xtrain, Xtest, ytrain, ytest, model, model_name):
     mse_test = mean_absolute_error(ytest, y_pred_test)
 
     output = "\n========================"
-    output += f" Results for {model_name} "
+    output += f' Results for {model_name}'
     output += "========================" 
     output += "\n MAE on TRAIN set: {:.4f}".format(mse_train) 
     output += "\n MAE on TEST set: {:.4f}".format(mse_test)
@@ -83,6 +79,13 @@ print(result_gbr)
 results.append(result_gbr)
 
 # #### Random Forest Regressor
+rfr = RandomForestRegressor(verbose=2)
+rfr.fit(X_train_norm, y_train)
+result_rfr = metrics(X_train_norm, X_test_norm, y_train, y_test, rfr, "Random Forest Regressor")
+print(result_rfr)
+results.append(result_rfr)
+
+# #### Logistic regression
 rfr = RandomForestRegressor(verbose=2)
 rfr.fit(X_train_norm, y_train)
 result_rfr = metrics(X_train_norm, X_test_norm, y_train, y_test, rfr, "Random Forest Regressor")

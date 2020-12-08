@@ -26,9 +26,13 @@ def prepareData(data, train=True):
     # data cleaning
     data.drop(columns=['text', 'hashtags', 'user_mentions', 'hashtags', 'urls', 'id'], inplace=True)
     if train:
+        data['bins'] = pd.cut(data['retweet_count'], bins=[-1,1,2,3,4,10,100,1000,10000,50000,100000,200000,500000,1000000], labels=[0,1,2,3,4,10,100,1000,10000,50000,100000,200000,500000])
         X = data.drop('retweet_count', axis=1)
-        y = data['retweet_count'].to_numpy()
-        return train_test_split(X, y, test_size=0.2)
+        y = data['retweet_count']
+        X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=data['bins'], test_size=0.3)
+        X_train = X_train.drop(columns=['bins'])
+        X_test = X_test.drop(columns=['bins'])
+        return X_train, X_test, y_train, y_test
     else:
         return data
 		
@@ -45,18 +49,11 @@ X_eval_norm = scaler.transform(X_test_eval)
 
 # --------------- GRADIENT BOOSTING OPTIMIZATION -------------------
 
-params = {'n_estimators': 1000,
-          'max_depth': 7,
-          'min_samples_split': 3,
-          'learning_rate': 0.01,
-          'loss': 'lad',
-           'verbose':1}
-
-model = GradientBoostingRegressor(loss='lad')
+model = GradientBoostingRegressor(loss='lad', random_state=9)
 
 parameters = {'learning_rate': sp_randFloat(),
               'subsample'    : sp_randFloat(),
-              #'n_estimators' : sp_randInt(100, 1000),
+              'n_estimators' : sp_randInt(100, 1000),
               'max_depth'    : sp_randInt(4, 10)}
 
 randm = RandomizedSearchCV(estimator=model, 

@@ -1,6 +1,11 @@
 
-======================== Results for Gradient Boosting Regressor ========================
- MAE on TRAIN set: 142.0418
- MAE on TEST set: 150.7418
+======================== Results for Gradient Boosting Regressor========================
+ MAE on TRAIN set: 143.3495
+ MAE on TEST set: 145.6459
+ ================================================ 
+ 
+======================== Results for Random Forest Regressor========================
+ MAE on TRAIN set: 86.8907
+ MAE on TEST set: 238.3417
  ================================================ 
  
