@@ -18,10 +18,6 @@ from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.linear_model import LogisticRegression
 
-
-# In[31]:
-
-
 ### Data loading preparation
 
 def prepareDataClassification(data, train=True):
@@ -43,6 +39,7 @@ df_eval = pd.read_csv('../../data/eval_clean_final.csv')
 
 #Adding classification column
 df['classif'] = pd.cut(df['retweet_count'], bins=[-1,4,197,1000000], labels=[0,1,2])
+#df['classif'] = pd.cut(df['retweet_count'], bins=[-1,10,1000000], labels=[0,1])
 
 X_train, X_test, y_train, y_test = prepareDataClassification(df, True)
 X_test_eval = prepareDataClassification(df_eval, False)
@@ -53,16 +50,9 @@ X_test_norm = scaler.transform(X_test)
 X_eval_norm = scaler.transform(X_test_eval)
 
 
-# ### Random Forest Classifier
-
-# In[30]:
-
+#### Random Forest Classifier
 
 params = {'random_state':9}
-
-
-# In[29]:
-
 
 rfc = RandomForestClassifier(**params, verbose=2)
 rfc.fit(X_train_norm, y_train)
@@ -80,7 +70,6 @@ plt.savefig('results/Confusion_matri_RF_default')
 print('Accuracy:', accuracy_score(y_test, y_pred))
 print('F1-score:', f1_score(y_test, y_pred, average=None))
 
-
 with open('results/Classifier-results.txt', 'w') as f:
     output = "\n \n ========================"
     output += " Results for Random Forest Classifier (RFC) =========================="
@@ -91,17 +80,10 @@ with open('results/Classifier-results.txt', 'w') as f:
     output += "\n ======================================================== \n"
     f.write(output)
 
-# ### Gradient Boosting Classifier
-
-# In[38]:
-
+#### Gradient Boosting Classifier
 
 gbc = GradientBoostingClassifier(random_state=0, verbose=2)
 gbc.fit(X_train_norm, y_train) 
-
-
-# In[39]:
-
 
 #Confusion matrix
 y_pred=gbc.predict(X_test_norm)
@@ -112,10 +94,6 @@ sns.set(font_scale=1.4)
 sns.heatmap(matrix, annot=True, annot_kws={'size':10},
             cmap=plt.cm.Greens, linewidths=0.2)
 plt.savefig('results/Confusion_matri_GBC')
-
-
-# In[40]:
-
 
 print('Accuracy:', accuracy_score(y_test, y_pred))
 print('F1-score:', f1_score(y_test, y_pred, average=None))
@@ -131,17 +109,10 @@ with open('results/Classifier-results.txt', 'a') as f:
     f.write(output)
 
 
-# ### K-nearest neighbors classifier
-
-# In[32]:
-
+#### K-nearest neighbors classifier
 
 neigh = KNeighborsClassifier(n_neighbors=1)
 neigh.fit(X_train_norm, y_train)  #too long
-
-
-# In[33]:
-
 
 #Confusion matrix
 y_pred = neigh.predict(X_test_norm)
@@ -167,9 +138,10 @@ with open('results/Classifier-results.txt', 'a') as f:
     f.write(output)
 
 
-# ### Logistic regression (classifier)
+#### Logistic regression (classifier)
 
-lgc = LogisticRegression(random_state=9).fit(X_train_norm, y_train)
+lgc = LogisticRegression(random_state=9)
+lgc.fit(X_train_norm, y_train)
 
 #Confusion matrix
 y_pred = lgc.predict(X_test_norm)
@@ -189,7 +161,7 @@ print('F1-score:', f1_score(y_test, y_pred, average=None))
 
 with open('results/Classifier-results.txt', 'a') as f:
     output = "\n \n ========================"
-    output += " Results for K-NN Classifier (KNN) =========================="
+    output += " Results for Logistic Regression Classifier (LRC) =========================="
     output += "\n With parameters :\n" + str(lgc.get_params())
     output += "\n ======================================================== \n" 
     output += 'Accuracy: ' + str(accuracy_score(y_test, y_pred)) + "\n"
