@@ -43,16 +43,20 @@ df['classif'] = pd.cut(df['retweet_count'], bins=[-1,10,1000000], labels=[0,1])
 
 X_train, X_test, y_train, y_test = prepareDataClassification(df, True)
 X_test_eval = prepareDataClassification(df_eval, False)
+X_full_predict = prepareDataClassification(df, False)
+X_full_predict.drop(['classif', 'retweet_count'], axis=1, inplace=True)
+
+
 
 scaler = MinMaxScaler()
 X_train_norm = scaler.fit_transform(X_train)
 X_test_norm = scaler.transform(X_test)
 X_eval_norm = scaler.transform(X_test_eval)
-
+X_full_predict_norm = scaler.transform(X_full_predict)
 
 #### Random Forest Classifier
 
-params = {'random_state':9, 'n_estimators':250, 'class_weight':'balanced'}
+params = {'random_state':9, 'n_estimators':100, 'class_weight':'balanced'}
 
 rfc = RandomForestClassifier(**params, verbose=2)
 rfc.fit(X_train_norm, y_train)
@@ -80,10 +84,17 @@ with open('results/random-rest-results.txt', 'w') as f:
     output += "\n ======================================================== \n"
     f.write(output)
 
+#Prediction on train dataset
+
+y_train_pred = pd.DataFrame(rfc.predict(X_full_predict_norm))
+y_train_pred.to_csv('results/output_train_binary_classification.csv')
+
+#Prediction on eval dataset
 y_eval_pred = pd.DataFrame(rfc.predict(X_eval_norm))
 y_eval_pred.set_index(df_eval['id'], inplace=True)
-print(y_eval_pred)
 y_eval_pred.to_csv('results/output_binary_classification.csv')
+
+
 
 
 
