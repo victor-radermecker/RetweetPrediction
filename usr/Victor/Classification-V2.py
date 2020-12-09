@@ -38,8 +38,8 @@ df = pd.read_csv('../../data/train_clean_final.csv')
 df_eval = pd.read_csv('../../data/eval_clean_final.csv')
 
 #Adding classification column
-df['classif'] = pd.cut(df['retweet_count'], bins=[-1,4,197,1000000], labels=[0,1,2])
-#df['classif'] = pd.cut(df['retweet_count'], bins=[-1,10,1000000], labels=[0,1])
+#df['classif'] = pd.cut(df['retweet_count'], bins=[-1,4,197,1000000], labels=[0,1,2])
+df['classif'] = pd.cut(df['retweet_count'], bins=[-1,10,1000000], labels=[0,1])
 
 X_train, X_test, y_train, y_test = prepareDataClassification(df, True)
 X_test_eval = prepareDataClassification(df_eval, False)

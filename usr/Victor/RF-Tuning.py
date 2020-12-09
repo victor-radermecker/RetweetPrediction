@@ -28,7 +28,6 @@ def prepareData(data, train=True):
     data.drop(columns=['text', 'hashtags', 'user_mentions', 'hashtags', 'urls', 'id'], inplace=True)
     if train:
         data['bins'] = pd.cut(data['retweet_count'], bins=[-1,1,2,3,4,10,100,1000,10000,50000,100000,200000,500000,1000000], labels=[0,1,2,3,4,10,100,1000,10000,50000,100000,200000,500000])
-        data = data.sample(50000)
         X = data.drop('retweet_count', axis=1)
         y = data['retweet_count']
         X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=data['bins'], test_size=0.3)
@@ -75,7 +74,7 @@ random_grid = {'n_estimators': n_estimators,
 
 
 rf = RandomForestClassifier(random_state = 9)
-rf_random = RandomizedSearchCV(estimator = rf, param_distributions = random_grid, n_iter = 20, cv = 3, verbose=2, random_state=9, n_jobs = -1)
+rf_random = RandomizedSearchCV(estimator = rf, param_distributions = random_grid, n_iter = 20, cv = 3, verbose=2, random_state=9)
 rf_random.fit(X_train_norm, y_train)
 
 
