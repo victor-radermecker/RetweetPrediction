@@ -28,11 +28,12 @@ pd.set_option('display.max_columns', 100)
 
 ### Data preparation
 
-def prepareData(data, train=True):
+def prepareData(df, train=True):
     # data cleaning
+    data = df.copy(deep=True)
     data.drop(columns=['text', 'hashtags', 'user_mentions', 'hashtags', 'urls', 'id'], inplace=True)
     if train:
-        data['bins'] = pd.cut(data['retweet_count'], bins=[-1,1,2,3,4,10,100,1000,10000,50000,100000,200000,500000,1000000], labels=[0,1,2,3,4,10,100,1000,10000,50000,100000,200000,500000])
+        data['bins'] = pd.cut(data['retweet_count'], bins=[-1,1,2,3,4,6,8,10,50,100,1000, 50000, 10000, 20000, 50000,100000,200000, 300000, 500000, 750000,1000000], labels=[0,1,2,3,4,6,8,10,50,100,1000, 50000, 10000, 20000, 50000,100000,200000, 300000, 500000, 750000])
         X = data.drop('retweet_count', axis=1)
         y = data['retweet_count']
         X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=data['bins'], test_size=0.3)
@@ -55,7 +56,7 @@ X_eval_norm = scaler.transform(X_test_eval)
 
 ### Training with default parameters
 
-params = {'n_estimators':500,
+params = {'n_estimators':1,
           'loss': 'lad',
           'verbose':1,
           'random_state':9}
@@ -107,14 +108,7 @@ plt.savefig('results/gbr-pred-default')
 
 ### Training for best RandomSearchCV parameters
 
-params = {'n_estimators': 1000,
-          'max_depth': 7,
-          'min_samples_split': 3,
-          'learning_rate': 0.1,
-          'loss': 'lad',
-          'verbose':1,
-          'random_state':9}
-
+params = {'alpha': 0.9, 'ccp_alpha': 0.0, 'criterion': 'friedman_mse', 'init': None, 'learning_rate': 0.1, 'loss': 'lad', 'max_depth': 7, 'max_features': None, 'max_leaf_nodes': None, 'min_impurity_decrease': 0.0, 'min_impurity_split': None, 'min_samples_leaf': 1, 'min_samples_split': 3, 'min_weight_fraction_leaf': 0.0, 'n_estimators': 1000, 'n_iter_no_change': None, 'presort': 'deprecated', 'random_state': 9, 'subsample': 1.0, 'tol': 0.0001, 'validation_fraction': 0.1, 'verbose': 1, 'warm_start': False}
 reg2 = ensemble.GradientBoostingRegressor(**params)
 
 reg2.fit(X_train_norm, y_train)
@@ -157,3 +151,20 @@ fig.tight_layout()
 plt.savefig('results/gbr-pred-optimal')
 
 # -------------------------------------------------------------------
+
+
+
+#save results on eval dataset
+
+# Predict the number of retweets for the evaluation dataset
+y_pred = reg2.predict(X_eval_norm)
+# Dump the results into a file that follows the required Kaggle template
+with open("gbr_predictions.txt", 'w') as f:
+    writer = csv.writer(f)
+    writer.writerow(["TweetID", "NoRetweets"])
+    for index, prediction in enumerate(y_pred):
+        writer.writerow([str(df_eval['id'].iloc[index]) , str(int(prediction))])
+
+
+
+

@@ -21,6 +21,7 @@ from sklearn.preprocessing import MinMaxScaler
 from scipy.stats import uniform as sp_randFloat
 from scipy.stats import randint as sp_randInt
 from sklearn.model_selection import RandomizedSearchCV
+from sklearn.ensemble import RandomForestRegressor
 
 # Models
 from sklearn.ensemble import GradientBoostingRegressor
@@ -72,10 +73,14 @@ X_eval_norm = scaler.transform(X_test_eval)
 
 ### Training with default parameters
 
-params = {'n_estimators':500,
+params = {'n_estimators':100,
           'loss': 'lad',
-          'verbose':1,
+          'verbose':2,
           'random_state':9}
+
+
+#params = {'alpha': 0.9, 'ccp_alpha': 0.0, 'criterion': 'friedman_mse', 'init': None, 'learning_rate': 0.1, 'loss': 'lad', 'max_depth': 8, 'max_features': None, 'max_leaf_nodes': None, 'min_impurity_decrease': 0.0, 'min_impurity_split': None, 'min_samples_leaf': 1, 'min_samples_split': 3, 'min_weight_fraction_leaf': 0.0, 'n_estimators': 250, 'n_iter_no_change': None, 'presort': 'deprecated', 'random_state': 9, 'subsample': 1.0, 'tol': 0.0001, 'validation_fraction': 0.1, 'verbose': 1, 'warm_start': False}
+
 
 reg = ensemble.GradientBoostingRegressor(**params)
 
@@ -116,11 +121,32 @@ plt.legend(loc='upper right')
 plt.xlabel('Boosting Iterations')
 plt.ylabel('Deviance')
 fig.tight_layout()
-plt.savefig('results/gbr-pred-default')
+plt.savefig('results/GBR-classifier-Predictions')
 
 
-# In[ ]:
+# RANDOM FOREST REGRESSOR
 
+rfr = RandomForestRegressor(random_state=9, verbose=2)
+rfr.fit(X_train_norm, y_train)
 
+#Train loss
+y_pred_train = np.rint(rfr.predict(X_train_norm))
+mse_train = mean_absolute_error(y_train, y_pred_train)
+#Test loss
+y_pred_test = np.rint(rfr.predict(X_test_norm))
+mse_test = mean_absolute_error(y_test, y_pred_test)
+
+# ------------------------------- SAVING OUTPUTS -------------------------------
+
+#Scores
+with open('results/RFR-classifier-Predictions.txt', 'w') as f:
+    output = "\n========================"
+    output += " Results for default Gradient Boosting Regressor (GBR) ================================"
+    output += "\n With parameters :\n" + str(reg.get_params())
+    output += "\n ======================================================== \n" 
+    output += "MAE on TRAIN set: {:.4f}".format(mse_train) + "\n"
+    output += "MAE on TEST set: {:.4f}".format(mse_test) + "\n"
+    output += "\n ======================================================== \n"
+    f.write(output)
 
 

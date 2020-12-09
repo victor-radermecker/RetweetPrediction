@@ -42,8 +42,8 @@ def prepareData(data, train=True):
     else:
         return data
 
-df = pd.read_csv('../../data/train_clean_final.csv')
-df_eval = pd.read_csv('../../data/eval_clean_final.csv')
+df = pd.read_csv('../data/train_clean_final.csv')
+df_eval = pd.read_csv('../data/eval_clean_final.csv')
 
 X_train, X_test, y_train, y_test = prepareData(df, True)
 X_test_eval = prepareData(df_eval, False)
@@ -55,7 +55,7 @@ X_eval_norm = scaler.transform(X_test_eval)
 
 ### Training with default parameters
 
-params = {'n_estimators':500,
+params = {'n_estimators':1,
           'loss': 'lad',
           'verbose':1,
           'random_state':9}
@@ -107,7 +107,7 @@ plt.savefig('results/gbr-pred-default')
 
 ### Training for best RandomSearchCV parameters
 
-params = {'n_estimators': 1000,
+params = {'n_estimators': 250,
           'max_depth': 7,
           'min_samples_split': 3,
           'learning_rate': 0.1,
@@ -157,3 +157,20 @@ fig.tight_layout()
 plt.savefig('results/gbr-pred-optimal')
 
 # -------------------------------------------------------------------
+
+
+
+#save results on eval dataset
+
+# Predict the number of retweets for the evaluation dataset
+y_pred = reg2.predict(X_eval_norm)
+# Dump the results into a file that follows the required Kaggle template
+with open("gbr_predictions.txt", 'w') as f:
+    writer = csv.writer(f)
+    writer.writerow(["TweetID", "NoRetweets"])
+    for index, prediction in enumerate(y_pred):
+        writer.writerow([str(eval_data['id'].iloc[index]) , str(int(prediction))])
+
+
+
+

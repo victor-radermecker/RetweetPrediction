@@ -71,7 +71,7 @@ def metrics(Xtrain, Xtest, ytrain, ytest, model, model_name):
     return output
 
 
-# #### Gradient Boosting Regressor
+##### Gradient Boosting Regressor
 gbr = GradientBoostingRegressor(loss='lad')
 gbr.fit(X_train_norm, y_train)
 result_gbr = metrics(X_train_norm, X_test_norm, y_train, y_test, gbr, "Gradient Boosting Regressor")
